@@ -6,7 +6,6 @@ import {
   TextInput,
   CheckBox,
   StyleSheet,
-  KeyboardAvoidingView,
 } from "react-native";
 import { useEffect, useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
@@ -16,35 +15,43 @@ import {
   changeData,
   deleteData,
   changeCheck,
+  changeSection,
 } from "../database/db";
 
-export default function Tasks({ data, setData }) {
+export default function Tasks({ secData, setSecData, secItem }) {
+  const [data, setData] = useState([]);
   const handleDelete = (itemID) => {
     deleteData(itemID).then((res) => {
       console.log(res);
     });
-    fetchAllData().then((res) => {
+    fetchAllData(secItem.id).then((res) => {
       setData(res.rows._array);
       console.log(data);
     });
   };
 
   useEffect(() => {
-    fetchAllData().then((res) => {
-      setData(res.rows._array);
-      console.log(data);
-    });
-  }, []);
+    console.log("Tasks Use effect return:");
+    console.log(secItem.id);
+    fetchAllData(secItem.id)
+      .then((res) => {
+        //setData(res.rows._array);
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [secItem]);
 
   const handleSaveToDatabase = () => {
-    saveToDB("", 0)
+    saveToDB("", 0, secItem.id)
       .then((res) => {
         console.log(res);
       })
       .catch((err) => {
         console.log(err);
       });
-    fetchAllData()
+    fetchAllData(secItem.id)
       .then((res) => {
         console.log(res);
         setData(res.rows._array);
@@ -55,8 +62,8 @@ export default function Tasks({ data, setData }) {
       });
   };
 
-  const handleFetch = () => {
-    fetchAllData().then((res) => {
+  const handleFetch = (secID) => {
+    fetchAllData(secID).then((res) => {
       setData(res.rows._array);
     });
   };
@@ -70,16 +77,6 @@ export default function Tasks({ data, setData }) {
   };
 
   const handleCheck = (id, event) => {
-    // let ar = data;
-    // //ar[id].completed = !ar[id].completed;
-    // if (ar[id].completed) {
-    //   console.log("lol");
-    //   ar[id].completed = 0;
-    // } else {
-    //   console.log("lol");
-    //   ar[id].completed = 1;
-    // }
-    // setData((currData) => [...currData]);
     console.log(id);
     console.log(event.nativeEvent.value ? 1 : 0);
     changeCheck(id, event.nativeEvent.value ? 1 : 0).then((res) => {
@@ -97,20 +94,23 @@ export default function Tasks({ data, setData }) {
         style={{
           flexDirection: "row",
           width: 400,
+          alignItems: "center",
+          justifyContent: "center",
+
           // borderBottomWidth: 1,
           // borderBottomColor: "grey",
         }}
       >
         <View
           style={{
-            height: 60,
+            height: 50,
             width: 300,
             flexDirection: "row",
           }}
         >
           <CheckBox
             style={{
-              marginTop: 15,
+              marginTop: 10,
               marginHorizontal: 5,
               color: "black",
             }}
@@ -127,7 +127,7 @@ export default function Tasks({ data, setData }) {
             ]}
             onChangeText={handleChange.bind(this, item)}
             autoCorrect={false}
-            onBlur={handleFetch}
+            onBlur={handleFetch.bind(this, secItem.id)}
           />
         </View>
         <TouchableOpacity
@@ -146,38 +146,65 @@ export default function Tasks({ data, setData }) {
     );
   };
 
+  const changeSec = (secItem, name) => {
+    let ar = secData;
+    console.log("Change Sec...");
+    console.log(secItem);
+    ar[ar.indexOf(secItem)].name = name;
+
+    setSecData((currData) => [...currData]);
+
+    changeSection(secItem.id, name)
+      .then(console.log("Section Changed..."))
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   return (
-    <View>
+    <View style={{ flex: 1 }}>
+      <View>
+        <TextInput
+          placeholder="Title"
+          style={{ margin: "7%", fontSize: 30 }}
+          onChangeText={changeSec.bind(this, secItem)}
+          value={secItem ? secItem.name : ""}
+        />
+      </View>
       <View
         style={{
+          width: "100%",
           backgroundColor: "white",
-          marginTop: 40,
+          height: "80%",
+        }}
+      >
+        <FlatList data={data} renderItem={renderItem} />
+      </View>
+      <View
+        style={{
+          backgroundColor: "#def6ff",
+          top: "95%",
           width: "100%",
           marginBottom: 30,
           alignContent: "center",
-          alignItems: "center",
+          position: "absolute",
+          height: 70,
         }}
       >
         <TouchableOpacity
           style={{
             backgroundColor: "#def6ff",
-            height: 70,
-            width: 70,
-            alignContent: "center",
+            margin: "1%",
+            height: 30,
+            width: 30,
             alignItems: "center",
+            justifyContent: "center",
             borderRadius: 40,
-            elevation: 5,
           }}
           onPress={handleSaveToDatabase}
         >
-          <AntDesign
-            name="plus"
-            style={{ marginTop: 20, fontSize: 30, color: "#2c92b8" }}
-          />
+          <AntDesign name="plus" style={{ fontSize: 25, color: "#2c92b8" }} />
         </TouchableOpacity>
-      </View>
-      <View style={{ width: 350 }}>
-        <FlatList data={data} renderItem={renderItem} />
       </View>
     </View>
   );
@@ -186,7 +213,7 @@ export default function Tasks({ data, setData }) {
 //StyleSheets
 
 const styles = StyleSheet.create({
-  default: { fontSize: 20, color: "grey", width: "80%" },
+  default: { fontSize: 20, color: "grey", width: "100%" },
   checked: {
     color: "#d1d1d1",
     textDecorationLine: "line-through",

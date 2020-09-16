@@ -1,41 +1,42 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React from "react";
 import { StyleSheet, Text, View, KeyboardAvoidingView } from "react-native";
-import { init } from "./database/db";
+import { initTasks, initSections } from "./database/db";
 
-import Tasks from "./components/tasks";
+import SectionList from "./components/sectionList";
 
 // Main App
 
 export default function App() {
-  init()
+  initTasks()
     .then(console.log("Database Initialized..."))
     .catch((err) => {
       console.log(err);
     });
 
-  const [data, setData] = useState([]);
-
-  const handleShow = () => {
-    setShow(true);
-  };
+  initSections()
+    .then((res) => {
+      console.log(res);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 
   return (
     <KeyboardAvoidingView style={styles.container}>
       <View
         style={{
-          justifyContent: "flex-end",
           flex: 1,
           backgroundColor: "white",
         }}
       >
         <View style={styles.taskView}>
-          <Text style={{ fontSize: 45, color: "#2c92b8" }}>Todo list</Text>
+          <Text style={{ fontSize: 45, color: "#2c92b8" }}>Todo List</Text>
         </View>
         <View
-          style={{ height: "35%", marginHorizontal: 70, marginBottom: 300 }}
+          style={{ height: "70%", marginHorizontal: 70, marginBottom: 300 }}
         >
-          <Tasks data={data} setData={setData} />
+          <SectionList />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -59,10 +60,10 @@ const styles = StyleSheet.create({
     height: 45,
   },
   taskView: {
-    backgroundColor: "#def6ff",
+    backgroundColor: "white",
     width: 500,
     height: 100,
-    marginBottom: 15,
+    marginTop: "10%",
     alignItems: "center",
   },
 });
